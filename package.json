@@ -1,0 +1,13 @@
+{
+  "name": "kurl-link",
+  "version": "1.0.0",
+  "description": "A minimal Node.js link shortener with SQLite",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
