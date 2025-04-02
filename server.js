@@ -5,6 +5,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CREATE_PASSWORD = process.env.CREATE_PASSWORD || "defaultpassword";
+const INSTANCE_URL = process.env.INSTANCE_URL || "http://localhost:3000"; // Default to local
 
 // Define database path
 const DB_PATH = path.join(__dirname, "data", "links.db");
