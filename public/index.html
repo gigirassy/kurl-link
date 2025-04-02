@@ -8,19 +8,8 @@
         body {
             text-align: center;
             margin: 50px;
-	    width:500px;
         }
     </style>
-    <script>
-        window.onload = function() {
-            const codeBlock = document.getElementById("api-example");
-            if (window.INSTANCE_URL) {
-                codeBlock.textContent = `curl -X POST ${window.INSTANCE_URL}/shorten \\
--H "Content-Type: application/json" \\
--d '{"password": "HUNTER7", "name": "information", "url": "https://example.com"}'`;
-            }
-        };
-    </script>
 </head>
 <body>
     <div class="container">
