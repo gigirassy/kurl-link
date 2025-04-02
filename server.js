@@ -31,6 +31,12 @@ db.run(`
 app.use(express.json());
 app.use(express.static("public")); // Serve index.html
 
+// Route to inject instance URL into the page
+app.get("/config.js", (req, res) => {
+    res.setHeader("Content-Type", "application/javascript");
+    res.send(`window.INSTANCE_URL = "${INSTANCE_URL}";`);
+});
+
 // Route to create a short link (requires password)
 app.post("/shorten", (req, res) => {
     const { password, name, url } = req.body;
