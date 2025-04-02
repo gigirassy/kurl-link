@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Shortener</title>
+    <style>
+        body {
+            text-align: center;
+            margin: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>kurl 0.0.1</h1>
+        <p>a minimalist link shortener based in node.js and sqlite.</p>
+        <p>to create a short link, send a post request to this website with your terminal, and specify the password given to you by the administrator of this site in the request. for example...</p>
+        <code>curl -X POST https://kurl.instance.invalid/shorten
+        -H "Content-Type: application/json"
+        -d '{"password": "HUNTER7", "name": "information", "url": "https://example.com"}'</code>
+		<p><a href="https://github.com/gigirassy/kurl-link/">source code</a></p>
+    </div>
+</body>
+</html>
