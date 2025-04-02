@@ -6,34 +6,32 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const CREATE_PASSWORD = process.env.CREATE_PASSWORD || "defaultpassword";
 
+// Define database path
 const DB_PATH = path.join(__dirname, "data", "links.db");
 
-let db;
-
-db = new sqlite3.Database(DB_PATH, (err) => {
+// Initialize a single shared SQLite connection
+const db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) {
         console.error("Error opening database:", err.message);
+        process.exit(1); // Exit if database connection fails
     } else {
         console.log("Connected to the SQLite database.");
     }
 });
 
+// Create table once at startup
 db.run(`
     CREATE TABLE IF NOT EXISTS links (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
         url TEXT NOT NULL
     )
-`, (err) => {
-    if (err) {
-        console.error("Error creating table:", err.message);
-    }
-});
-
-app.use(express.static("public"));
+`);
 
 app.use(express.json());
+app.use(express.static("public")); // Serve index.html
 
+// Route to create a short link (requires password)
 app.post("/shorten", (req, res) => {
     const { password, name, url } = req.body;
 
@@ -45,26 +43,36 @@ app.post("/shorten", (req, res) => {
     }
 
     const stmt = db.prepare("INSERT INTO links (name, url) VALUES (?, ?)");
-    stmt.run([name, url], (err) => {
+    stmt.run([name, url], function (err) {
+        stmt.finalize(); // Release memory immediately after use
         if (err) {
-            res.status(409).json({ error: "Name already taken" });
-        } else {
-            res.json({ shortUrl: `/${name}` });
+            return res.status(409).json({ error: "Name already taken" });
         }
+        res.json({ shortUrl: `/${name}` });
     });
 });
 
+// Route to redirect to the original URL
 app.get("/:name", (req, res) => {
     const name = req.params.name;
 
     db.get("SELECT url FROM links WHERE name = ?", [name], (err, row) => {
         if (err) {
-            res.status(500).json({ error: "Database error" });
-        } else if (row) {
-            res.redirect(row.url);
-        } else {
-            res.status(404).json({ error: "Short link not found" });
+            return res.status(500).json({ error: "Database error" });
         }
+        if (row) {
+            return res.redirect(row.url);
+        }
+        res.status(404).json({ error: "Short link not found" });
+    });
+});
+
+// Handle graceful shutdown to avoid database lock issues
+process.on("SIGINT", () => {
+    console.log("Closing database connection...");
+    db.close(() => {
+        console.log("Database connection closed.");
+        process.exit(0);
     });
 });
 
