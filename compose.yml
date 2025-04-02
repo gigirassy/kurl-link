@@ -6,6 +6,7 @@ services:
       - "3000:3000"
     environment:
       - CREATE_PASSWORD=HUNTER7 #change me!
+      - INSTANCE_URL=https://l.blitzw.in #change me too
     volumes:
       - ./data:/app/data
     restart: unless-stopped
