@@ -23,7 +23,7 @@
         </code>
 	<p>kurl has extremely simple, non-tracking analytics that do not log location, just referrers and click count. if you have the adminstrator password, check the analytics with the following request:</p>
 	<code id="api-example">
-	curl -X POST http://localhost:3000/analytics -H "Content-Type: application/json" -d '{"password": "HUNTER7", "name": "information"}'
+	curl -X POST {{INSTANCE_URL}}/analytics -H "Content-Type: application/json" -d '{"password": "HUNTER7", "name": "information"}'
 	</code>
 	<p><a href="https://github.com/gigirassy/kurl-link/">source code</a></p>
     </div>
