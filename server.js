@@ -1,5 +1,5 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();  
+const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 const app = express();
@@ -29,6 +29,8 @@ db.run(`
         console.error("Error creating table:", err.message);
     }
 });
+
+app.use(express.static("public"));
 
 app.use(express.json());
 
