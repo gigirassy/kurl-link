@@ -31,6 +31,7 @@ app.use(express.json());
 app.use(express.static("public")); 
 
 app.get("/", (req, res) => {
+
     fs.readFile(path.join(__dirname, "public", "index.html"), "utf-8", (err, data) => {
         if (err) {
             return res.status(500).send("Error reading index.html file.");
