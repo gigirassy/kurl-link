@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   link-shortener:
-    build: .
+    image: gchr.io/gigirassy/kurl-link:main
     container_name: link-shortener
     ports:
       - "3000:3000"
@@ -11,3 +11,8 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.15"
+          memory: "100M"
