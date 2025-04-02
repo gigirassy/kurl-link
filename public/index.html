@@ -8,6 +8,7 @@
         body {
             text-align: center;
             margin: 50px;
+	    width:300px;
         }
     </style>
     <script>
@@ -27,7 +28,7 @@
         <p>a minimalist link shortener based in node.js and sqlite.</p>
         <p>to create a short link, send a post request to this website with your terminal, and specify the password given to you by the administrator of this site in the request. for example...</p>
         <code id="api-example">
-            curl -X POST https://kurl.instance.invalid/shorten
+            curl -X POST {{INSTANCE_URL}}/shorten
             -H "Content-Type: application/json"
             -d '{"password": "HUNTER7", "name": "information", "url": "https://example.com"}'
         </code>
