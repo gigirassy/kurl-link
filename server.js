@@ -8,17 +8,17 @@ const CREATE_PASSWORD = process.env.CREATE_PASSWORD || "defaultpassword";
 const ANALYTICS_PASSWORD = process.env.ANALYTICS_PASSWORD || CREATE_PASSWORD;
 
 const DB_PATH = path.join(__dirname, "data", "links.db");
-
 const db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) {
         console.error("Error opening database:", err.message);
         process.exit(1);
-    } else {
-        console.log("Connected to SQLite database.");
     }
+    console.log("Connected to SQLite database.");
 });
 
 db.exec("PRAGMA journal_mode = WAL;");
+db.exec("PRAGMA synchronous = NORMAL;");
+db.exec("PRAGMA cache_size = -2000;");
 
 db.serialize(() => {
     db.run(`
@@ -28,7 +28,6 @@ db.serialize(() => {
             url TEXT NOT NULL
         )
     `);
-
     db.run(`
         CREATE TABLE IF NOT EXISTS clicks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,40 +40,29 @@ db.serialize(() => {
 });
 
 app.use(express.json());
-app.use(express.static("public")); 
+app.use(express.static("public"));
 
 app.post("/shorten", (req, res) => {
     const { password, name, url } = req.body;
-
-    if (!password || password !== CREATE_PASSWORD) {
-        return res.status(403).json({ error: "Invalid password" });
-    }
-    if (!name || !url) {
-        return res.status(400).json({ error: "Name and URL are required" });
-    }
+    if (!password || password !== CREATE_PASSWORD) return res.status(403).json({ error: "Invalid password" });
+    if (!name || !url) return res.status(400).json({ error: "Name and URL are required" });
 
     const stmt = db.prepare("INSERT INTO links (name, url) VALUES (?, ?)");
     stmt.run([name, url], function (err) {
-        stmt.finalize(); 
-        if (err) {
-            return res.status(409).json({ error: "Name already taken" });
-        }
+        stmt.finalize();
+        if (err) return res.status(409).json({ error: "Name already taken" });
         res.json({ shortUrl: `/${name}` });
     });
 });
 
 app.get("/:name", (req, res) => {
     const name = req.params.name;
-    const referrer = req.get("Referer") || "direct"; 
+    const referrer = req.get("Referer") || "direct";
 
     db.get("SELECT url FROM links WHERE name = ?", [name], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: "Database error" });
-        }
+        if (err) return res.status(500).json({ error: "Database error" });
         if (row) {
-
             db.run("INSERT INTO clicks (link_name, referrer) VALUES (?, ?)", [name, referrer]);
-
             return res.redirect(row.url);
         }
         res.status(404).json({ error: "Short link not found" });
@@ -83,21 +71,14 @@ app.get("/:name", (req, res) => {
 
 app.post("/analytics", (req, res) => {
     const { password, name } = req.body;
-
-    if (!password || password !== ANALYTICS_PASSWORD) {
-        return res.status(403).json({ error: "Invalid password" });
-    }
-    if (!name) {
-        return res.status(400).json({ error: "Short link name is required" });
-    }
+    if (!password || password !== ANALYTICS_PASSWORD) return res.status(403).json({ error: "Invalid password" });
+    if (!name) return res.status(400).json({ error: "Short link name is required" });
 
     db.all(
         `SELECT referrer, COUNT(*) AS count FROM clicks WHERE link_name = ? GROUP BY referrer ORDER BY count DESC`,
         [name],
         (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: "Database error" });
-            }
+            if (err) return res.status(500).json({ error: "Database error" });
 
             console.log(`Analytics for ${name}:`);
             rows.forEach(row => {
@@ -107,6 +88,36 @@ app.post("/analytics", (req, res) => {
             res.json({ analytics: rows });
         }
     );
+});
+
+app.post("/list", (req, res) => {
+    const { password } = req.body;
+    if (!password || password !== CREATE_PASSWORD) return res.status(403).json({ error: "Invalid password" });
+
+    db.all("SELECT name, url FROM links ORDER BY name", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+
+        console.log("Listing all short links:");
+        rows.forEach(row => {
+            console.log(`  ${row.name} => ${row.url}`);
+        });
+
+        res.json({ links: rows });
+    });
+});
+
+app.post("/delete", (req, res) => {
+    const { password, name } = req.body;
+    if (!password || password !== CREATE_PASSWORD) return res.status(403).json({ error: "Invalid password" });
+    if (!name) return res.status(400).json({ error: "Short link name is required" });
+
+    db.run("DELETE FROM links WHERE name = ?", [name], function (err) {
+        if (err) return res.status(500).json({ error: "Database error" });
+        if (this.changes === 0) return res.status(404).json({ error: "Short link not found" });
+
+        console.log(`Deleted short link: ${name}`);
+        res.json({ message: `Short link '${name}' deleted.` });
+    });
 });
 
 process.on("SIGINT", () => {
